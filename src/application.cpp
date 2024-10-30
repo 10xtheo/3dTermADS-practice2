@@ -2,41 +2,66 @@
 #include "Timsort.h"
 #include <iostream>
 #include <vector>
-#include <stack>
-using namespace std;
+#include <cstdlib>
+#include <ctime>
 
 int Application::exec()
 {
+    srand(time(0));
     Timsort ts;
-    vector<int> list = {7, 18, 21, 34, 1, 6, 7, 14, 5, 23, 41, 88, 0, 2, 33, 49, 54, 61, 76, 82, 9, 19, 25, 31, 38, 47, 52, 58, 65, 70, 74, 80, 86, 92, 97, 4, 10, 17, 22, 29, 36, 43, 50, 33, 49, 54, 61, 76, 82, 9, 19, 25, 31, 38, 47, 52, 58, 65, 70, 74, 80, 86, 92, 97, 4, 10, 17, 22, 29, 36, 43, 50, 57, 64, 71, 78, 83, 90, 5, 28, 37, 42, 56, 73, 89, 12, 34, 67, 5, 23, 41, 88, 0, 2, 33, 49, 54, 61, 76, 82, 9, 19, 25, 31, 38, 47, 52, 58, 65, 70, 74, 80, 86, 92, 97, 4, 10, 17, 22, 29, 36, 43, 50, 57, 64, 71, 78, 83, 90};
 
-    ts.timsort(&list);
-
-    for (size_t i = 0; i < list.size(); ++i)
+    while (true)
     {
-        cout << list[i] << " ";
+        std::vector<int> list;
+        srand(time(0));
+
+        std::cout << "enter arr length or 0 to exit" << "\n" << "> ";
+        int size = getInt();
+        if (size < 0)
+        {
+            std::cout << "wrong arr length" << "\n\n";
+        }
+        else if (size == 0)
+        {
+            break;
+        }
+        else
+        {
+            for (int i = 0; i < size; ++i)
+            {
+                int randInt = rand() % 99 + 1;
+                list.push_back(randInt);
+            }
+            std::cout << "unsorted: \n";
+            for (size_t i = 0; i < list.size(); ++i)
+            {
+                std::cout << list[i] << " ";
+            }
+            std::cout << "\n\n";
+
+            ts.timsort(&list);
+            std::cout << "sorted: \n";
+            for (size_t i = 0; i < list.size(); ++i)
+            {
+                std::cout << list[i] << " ";
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n";
     }
-    cout << endl;
-    cout << endl;
 
     return 0;
-}
-
-int Application::startMenu()
-{
-   int ch = getInt();
-   return ch;
 }
 
 int Application::getInt()
 {
     int a;
-      cin >> a;
-      while (cin.fail())
+      std::cin >> a;
+      while (std::cin.fail())
       {
-        cin.clear();
-        cin.ignore();
-        cin >> a;
+        std::cin.clear();
+        std::cin.ignore();
+        std::cin >> a;
       }
       return a;
 }

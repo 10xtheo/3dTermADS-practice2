@@ -6,7 +6,6 @@ class Application
 public:
     int exec();
 private:
-    int startMenu();
     int getInt();
 };
 

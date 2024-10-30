@@ -6,26 +6,16 @@
 #include <stack>
 #include <algorithm>
 
-using namespace std;
-
 class Timsort
 {
 private:
     int getMinrun(int n);
+    void insertionSort(unsigned begin, unsigned size, std::vector<int> *run);
+    void merge(std::vector<int> *list, std::pair<size_t, size_t> A, std::pair<size_t, size_t> B);
 public:
-    void timsort(vector<int> *list);
-    void insertionSort(unsigned begin, unsigned size, vector<int> *run);
-    std::stack<std::pair<size_t, size_t>> slicer(vector<int> *list);
-    void merge(vector<int> *list, std::pair<size_t, size_t> A, std::pair<size_t, size_t> B);
-    void mergeSort(vector<int> *list, std::stack<std::pair<size_t, size_t>> stack);
-    size_t binarySearch(const std::vector<int>& arr, int target, size_t start, size_t end);
-};
+    void timsort(std::vector<int> *list);
 
-void Timsort::timsort(vector<int> *list)
-{
-    stack<pair<size_t, size_t>> stack = slicer(list);
-    mergeSort(list, stack);
-}
+};
 
 int Timsort::getMinrun(int n)
 {
@@ -38,10 +28,10 @@ int Timsort::getMinrun(int n)
     return n + r;
 }
 
-std::stack<std::pair<size_t, size_t>> Timsort::slicer(vector<int> *list)
+void Timsort::timsort(std::vector<int> *list)
 {
     int minrun = getMinrun(list->size());
-    std::stack<std::pair<size_t, size_t>> result;
+    std::stack<std::pair<size_t, size_t>> stack;
     for (size_t i = 0; i < list->size(); i++)
     {
         size_t start = i;
@@ -57,12 +47,55 @@ std::stack<std::pair<size_t, size_t>> Timsort::slicer(vector<int> *list)
         size_t runLength = i - start + 1;
         for (; runLength < size_t(minrun) && i + 1 < list->size(); ++i, ++runLength);
         insertionSort(start, runLength, list);
-        result.push({start, runLength});
+        stack.push({start, runLength});
+
+
+        while (stack.size() >= 3)
+        {
+            std::pair<size_t, size_t> X = stack.top();
+            stack.pop();
+            std::pair<size_t, size_t> Y = stack.top();
+            stack.pop();
+            std::pair<size_t, size_t> Z = stack.top();
+            stack.pop();
+
+            if (Z.second > Y.second + X.second && Y.second > X.second)
+            {
+                stack.push(Z);
+                stack.push(Y);
+                stack.push(X);
+                break;
+            }
+            else
+            {
+                if (X.second < Z.second)
+                {
+                    merge(list, Y, X);
+                    stack.push(Z);
+                    stack.push({std::min(Y.first, X.first), Y.second + X.second});
+                }
+                else
+                {
+                    merge(list, Y, Z);
+                    stack.push({std::min(Y.first, Z.first), Y.second + Z.second});
+                    stack.push(X);
+                }
+            }
+
+        }
+        while (stack.size() >= 2)
+        {
+            std::pair<size_t, size_t> X = stack.top();
+            stack.pop();
+            std::pair<size_t, size_t> Y = stack.top();
+            stack.pop();
+            merge(list, X, Y);
+            stack.push({std::min(X.first, Y.first), X.second+Y.second});
+        }
     }
-    return result;
 }
 
-void Timsort::insertionSort(unsigned begin, unsigned size, vector<int> *run)
+void Timsort::insertionSort(unsigned begin, unsigned size, std::vector<int> *run)
 {
     for (size_t j = begin+1; j < size+begin; ++j)
     {
@@ -75,54 +108,20 @@ void Timsort::insertionSort(unsigned begin, unsigned size, vector<int> *run)
     }
 }
 
-void Timsort::mergeSort(vector<int> *list, std::stack<std::pair<size_t, size_t>> stack)
-{
-    while (stack.size() >= 3)
-    {
-        std::pair<size_t, size_t> X = stack.top();
-        stack.pop();
-
-        std::pair<size_t, size_t> Y = stack.top();
-        stack.pop();
-
-        std::pair<size_t, size_t> Z = stack.top();
-        stack.pop();
-
-        if (!(Z.second > Y.second + X.second) || !(Y.second > X.second))
-        {
-            std::pair<size_t, size_t> minXZ = (X.second < Z.second) ? X : Z;
-            std::pair<size_t, size_t> maxXZ = (X.second > Z.second) ? X : Z;
-            merge(list, Y, minXZ);
-            stack.push(maxXZ);
-            stack.push({std::min(Y.first, minXZ.first), Y.second+minXZ.second});
-        }
-    }
-    if (stack.size() == 2)
-    {
-        std::pair<size_t, size_t> X = stack.top();
-        stack.pop();
-
-        std::pair<size_t, size_t> Y = stack.top();
-        stack.pop();
-
-        merge(list, X, Y);
-    }
-}
-
-void Timsort::merge(vector<int> *list, std::pair<size_t, size_t> A, std::pair<size_t, size_t> B) {
+void Timsort::merge(std::vector<int> *list, std::pair<size_t, size_t> A, std::pair<size_t, size_t> B) {
     // Определяем начальные и конечные индексы для обоих диапазонов
 
     if (A.first > B.first)
-        swap(A, B);
+        std::swap(A, B);
 
-    size_t startA = A.first;
-    size_t endA = A.first + A.second;
-    size_t startB = B.first;
-    size_t endB = B.first + B.second;
+    const size_t startA = A.first;
+    const size_t endA = A.first + A.second;
+    const size_t startB = B.first;
+    const size_t endB = B.first + B.second;
 
     // Создаем временный вектор для хранения объединенных результатов
 
-    vector<int> temporary;
+    std::vector<int> temporary;
 
     // Заполняем временный вектор
 
@@ -135,15 +134,52 @@ void Timsort::merge(vector<int> *list, std::pair<size_t, size_t> A, std::pair<si
     size_t i = startA;  // Индекс для записи в оригинальный список
 
     // Слияние двух диапазонов
+    size_t gallopCounterA = 0;
+    size_t gallopCounterB = 0;
+    const size_t gallopStart = 7;
     while (indexA < temporary.size() && indexB < endB)
     {
         if (temporary[indexA] <= (*list)[indexB])
         {
             (*list)[i++] = temporary[indexA++];
+            gallopCounterA++;
+
+            if (gallopCounterA == gallopStart)
+            {
+                size_t step = 1;
+                while (indexA + step < temporary.size() && temporary[indexA + step] <= (*list)[indexB])
+                {
+                    step *= 2;
+                }
+                // Проверка на пересечение границ
+                const size_t maxGallop = std::min(step / 2, temporary.size() - indexA);
+                for (size_t iter = 0; iter < maxGallop; ++iter)
+                {
+                    (*list)[i++] = temporary[indexA++];
+                }
+                gallopCounterA = 0;
+            }
         }
         else
         {
             (*list)[i++] = (*list)[indexB++];
+            gallopCounterB++;
+
+            if (gallopCounterB == gallopStart)
+            {
+                size_t step = 1;
+                while (indexB + step < endB && (*list)[indexB + step] < temporary[indexA])
+                {
+                    step *= 2;
+                }
+                // Проверка на пересечение границ
+                const size_t maxGallop = std::min(step, endB - indexB);
+                for (size_t iter = 0; iter < maxGallop; ++iter)
+                {
+                    (*list)[i++] = (*list)[indexB++];
+                }
+                gallopCounterB = 0;
+            }
         }
     }
 
@@ -158,23 +194,6 @@ void Timsort::merge(vector<int> *list, std::pair<size_t, size_t> A, std::pair<si
     {
         (*list)[i++] = (*list)[indexB++];
     }
-}
-
-size_t Timsort::binarySearch(const std::vector<int>& arr, int target, size_t start, size_t end)
-{
-    while (start < end)
-    {
-        size_t mid = start + (end - start) / 2;
-        if (arr[mid] < target)
-        {
-            start = mid + 1;
-        }
-        else
-        {
-            end = mid;
-        }
-    }
-    return start; // Возвращаем позицию для вставки
 }
 
 #endif // TIMSORT_H
